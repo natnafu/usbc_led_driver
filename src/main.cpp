@@ -2,10 +2,12 @@
 #include <SparkFun_STUSB4500.h>
 #include <Wire.h>
 
-// STUSB4500 Pin Definitions
+// STUSB4500 Definitions
 #define PIN_STUSB4500_SDA 2
 #define PIN_STUSB4500_SCL 3
 #define PIN_STUSB4500_RESET 0
+#define STUSB4500_ADDR  0x28
+#define SW_GPIO_ADDR 0x2D
 
 // LED Strip Pin Definitions
 #define PIN_BLUE 7
@@ -18,9 +20,21 @@
 #define PIN_SW_12V 1
 
 // PD settings
+#define LED_VOLTAGE 12 // voltage of LEDs set by switch if not 5V
 #define CURR_LIMIT_A 3.0
-
+#define MAX_LED_VOLTAGE 15
+// safety check
+#if LED_VOLTAGE > MAX_LED_VOLTAGE
+  #error "LED_VOLTAGE must be less than MAX_LED_VOLTAGE"
+#endif
 STUSB4500 usb;
+
+void setUSBGPIO(uint8_t value) {
+  Wire.beginTransmission(STUSB4500_ADDR);
+  Wire.write(SW_GPIO_ADDR);
+  Wire.write(value ? 0x01 : 0x00);
+  Wire.endTransmission();
+}
 
 void usb_pd_config() {
   Serial.println("Configuring STUSB4500...");
@@ -28,8 +42,15 @@ void usb_pd_config() {
 
   // determine voltage based off switch
   float voltage = 5.0;
-  if (digitalRead(PIN_SW_12V)) voltage = 12.0;
+  if (digitalRead(PIN_SW_12V)) voltage = LED_VOLTAGE;
   Serial.printf("Switch set to %.1fV\n", voltage);
+
+  // if 12V, turn on USB GPIO LED
+  if (voltage == LED_VOLTAGE) {
+    setUSBGPIO(1);
+  } else {
+    setUSBGPIO(0);
+  }
 
   // check if voltage and current need to be updated
   bool update_pd = false;
@@ -81,9 +102,6 @@ void setup() {
   pinMode(PIN_CW, OUTPUT);
   pinMode(PIN_STUSB4500_RESET, OUTPUT);
   pinMode(PIN_SW_12V, INPUT_PULLUP);
-
-  // set BLUE on to give ground for multimeter
-  digitalWrite(PIN_BLUE, HIGH);
 
   // setup USB PD IC
   digitalWrite(PIN_STUSB4500_RESET, LOW); // make sure ST is enabled
