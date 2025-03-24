@@ -27,6 +27,16 @@
 #if LED_VOLTAGE > MAX_LED_VOLTAGE
   #error "LED_VOLTAGE must be less than MAX_LED_VOLTAGE"
 #endif
+
+// LED PWM things
+#define PWM_FREQ 5000
+#define PWM_RES 8
+#define PWM_CH_BLUE 0
+#define PWM_CH_GREEN 1
+#define PWM_CH_RED 2
+#define PWM_CH_WW 3
+#define PWM_CH_CW 4
+
 STUSB4500 usb;
 
 void setUSBGPIO(uint8_t value) {
@@ -112,6 +122,23 @@ void setup() {
     while(1);
   }
   usb_pd_config();
+
+  // setup PWM
+  ledcSetup(PWM_CH_BLUE, PWM_FREQ, PWM_RES);
+  ledcSetup(PWM_CH_GREEN, PWM_FREQ, PWM_RES);
+  ledcSetup(PWM_CH_RED, PWM_FREQ, PWM_RES);
+  ledcSetup(PWM_CH_WW, PWM_FREQ, PWM_RES);
+  ledcSetup(PWM_CH_CW, PWM_FREQ, PWM_RES);
+  ledcAttachPin(PIN_BLUE, PWM_CH_BLUE);
+  ledcAttachPin(PIN_GREEN, PWM_CH_GREEN);
+  ledcAttachPin(PIN_RED, PWM_CH_RED);
+  ledcAttachPin(PIN_WW, PWM_CH_WW);
+  ledcAttachPin(PIN_CW, PWM_CH_CW);
+  ledcWrite(PWM_CH_BLUE, 0);
+  ledcWrite(PWM_CH_GREEN, 0);
+  ledcWrite(PWM_CH_RED, 0);
+  ledcWrite(PWM_CH_WW, 0);
+  ledcWrite(PWM_CH_CW, 0);
 }
 
 void loop() {
